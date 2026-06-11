@@ -1,0 +1,102 @@
+# Better-Harness Demo Experiment
+# This config optimizes a simple agent's harness using eval-driven feedback.
+#
+# Prerequisites:
+#   - Set OPENAI_API_KEY (or other model provider key) in your environment
+#   - Install: uv sync --extra dev && uv pip install deepagents
+#
+# Usage:
+#   uv run better-harness validate experiment.toml
+#   uv run better-harness run experiment.toml --output-dir runs/demo --max-iterations 3
+
+[experiment]
+name = "demo-agent-harness"
+runner = "pytest"
+workspace_root = "/Users/zxc/deepagents/deepagents/my_agent_demo"
+model = "openai:deepseek-v4-flash"
+max_iterations = 3
+
+[better_agent]
+model = "openai:deepseek-v4-flash"
+max_turns = 100
+
+[runner.pytest]
+project_root = "/Users/zxc/deepagents/deepagents/my_agent_demo"
+pytest_args = ["-q", "--tb=short"]
+
+# ========== Editable Harness Surfaces ==========
+
+# 1. Prompt surface - the agent's system prompt
+[surfaces.prompt]
+kind = "module_attr"
+target = "my_agent.graph:BASE_PROMPT"
+filename = "prompt.txt"
+base_value = """\
+You are a helpful assistant.
+"""
+
+# 2. Tools surface - custom tool definitions
+[surfaces.tools]
+kind = "workspace_file"
+target = "my_agent/tools.py"
+filename = "tools.py"
+base_file = "/Users/zxc/deepagents/deepagents/my_agent_demo/my_agent/tools.py"
+
+# 3. Middleware implementation surface
+[surfaces.middleware_impl]
+kind = "workspace_file"
+target = "my_agent/middleware.py"
+filename = "middleware.py"
+base_file = "/Users/zxc/deepagents/deepagents/my_agent_demo/my_agent/middleware.py"
+
+# 4. Middleware registration surface (where middleware is wired into the agent)
+[surfaces.middleware_registration]
+kind = "workspace_file"
+target = "my_agent/graph.py"
+filename = "graph.py"
+base_file = "/Users/zxc/deepagents/deepagents/my_agent_demo/my_agent/graph.py"
+
+# ========== Eval Cases ==========
+
+# --- Calculator tests ---
+[[cases]]
+case_id = "tests/evals/test_calculator.py::TestCalculator::test_basic_addition"
+split = "train"
+stratum = "tool_use"
+
+[[cases]]
+case_id = "tests/evals/test_calculator.py::TestCalculator::test_complex_expression"
+split = "train"
+stratum = "tool_use"
+
+[[cases]]
+case_id = "tests/evals/test_calculator.py::TestCalculator::test_division"
+split = "holdout"
+stratum = "tool_use"
+
+[[cases]]
+case_id = "tests/evals/test_calculator.py::TestCalculator::test_multiplication"
+split = "holdout"
+stratum = "tool_use"
+
+# --- Weather tests ---
+[[cases]]
+case_id = "tests/evals/test_weather.py::TestWeather::test_weather_query"
+split = "train"
+stratum = "tool_use"
+
+[[cases]]
+case_id = "tests/evals/test_weather.py::TestWeather::test_weather_shanghai"
+split = "holdout"
+stratum = "tool_use"
+
+# --- File operation tests ---
+[[cases]]
+case_id = "tests/evals/test_file_ops.py::TestFileOperations::test_write_and_read_file"
+split = "train"
+stratum = "tool_use"
+
+[[cases]]
+case_id = "tests/evals/test_file_ops.py::TestFileOperations::test_read_existing_file"
+split = "holdout"
+stratum = "tool_use"

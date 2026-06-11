@@ -1,0 +1,9 @@
+runs/
+*.log
+read_*.py
+run_judge_test.py
+EOF
+PYEOF
+__pycache__/
+*.pyc
+.env

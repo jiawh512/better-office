@@ -1,0 +1,95 @@
+# Better-Harness experiment for Workspace-Bench (10 tasks)
+# Phase: optimize agent harness to improve rubric scores
+
+[experiment]
+name = "workspace-bench-10tasks-hard"
+runner = "pytest"
+workspace_root = "./workspace_bench_agent"
+model = "openai:deepseek-v4-pro"
+max_iterations = 3
+score_mode = "sum"
+
+[better_agent]
+model = "openai:deepseek-v4-pro"
+max_turns = 300
+
+[runner.pytest]
+project_root = "./workspace_bench_agent"
+pytest_args = ["-q", "--tb=short", "-s"]
+uv_group = "test"
+
+# ========== Editable Harness Surfaces ==========
+
+[surfaces.prompt]
+kind = "module_attr"
+target = "workspace_bench_agent.graph:BASE_PROMPT"
+filename = "prompt.txt"
+base_file = "./workspace_bench_agent/graph.py"
+
+[surfaces.middleware_registration]
+kind = "workspace_file"
+target = "graph.py"
+filename = "graph.py"
+base_file = "./workspace_bench_agent/graph.py"
+
+[surfaces.tools]
+kind = "workspace_file"
+target = "tools.py"
+filename = "tools.py"
+base_file = "./workspace_bench_agent/tools.py"
+# NOTE: If Better Agent adds a new tool to this file, it must also update
+# the import line and the tools=[...] list in graph.py (see surface: middleware_registration).
+
+# ========== Eval Cases ==========
+
+# --- Train cases (hard, no images) ---
+[[cases]]
+case_id = "tests/evals/test_task_15.py::test_task_15"
+split = "train"
+stratum = "workspace_bench"
+
+[[cases]]
+case_id = "tests/evals/test_task_107.py::test_task_107"
+split = "train"
+stratum = "workspace_bench"
+
+[[cases]]
+case_id = "tests/evals/test_task_116.py::test_task_116"
+split = "train"
+stratum = "workspace_bench"
+
+[[cases]]
+case_id = "tests/evals/test_task_128.py::test_task_128"
+split = "train"
+stratum = "workspace_bench"
+
+[[cases]]
+case_id = "tests/evals/test_task_139.py::test_task_139"
+split = "train"
+stratum = "workspace_bench"
+
+[[cases]]
+case_id = "tests/evals/test_task_146.py::test_task_146"
+split = "train"
+stratum = "workspace_bench"
+
+# --- Holdout cases (hard, no images) ---
+[[cases]]
+case_id = "tests/evals/test_task_158.py::test_task_158"
+split = "holdout"
+stratum = "workspace_bench"
+
+[[cases]]
+case_id = "tests/evals/test_task_159.py::test_task_159"
+split = "holdout"
+stratum = "workspace_bench"
+
+[[cases]]
+case_id = "tests/evals/test_task_160.py::test_task_160"
+split = "holdout"
+stratum = "workspace_bench"
+
+[[cases]]
+case_id = "tests/evals/test_task_191.py::test_task_191"
+split = "holdout"
+stratum = "workspace_bench"

@@ -1,0 +1,44 @@
+services:
+  better-harness-wb:
+    image: workspace-bench:local
+    init: true
+    network_mode: host
+    working_dir: /workspace/workspace_bench_demo
+    env_file:
+      - .env
+    environment:
+      # Workspace-Bench paths
+      WORKSPACE_BENCH_ROOT: /workspace/Workspace-Bench
+      WORKSPACE_BENCH_EVAL_ROOT: /workspace/Workspace-Bench/evaluation
+      WB_TASK_ROOT: /workspace/Workspace-Bench/evaluation/tasks_lite
+      WB_EVAL_SRC: /workspace/Workspace-Bench/evaluation/src
+      # Better-Harness path
+      BETTER_HARNESS_ROOT: /workspace/better-harness
+      # Python path
+      PYTHONPATH: /workspace/better-harness:/workspace/workspace_bench_demo/workspace_bench_agent
+      # Default model configs
+      INNER_AGENT_MODEL: deepseek-v4-pro
+      BETTER_AGENT_MODEL: deepseek-v4-pro
+      JUDGE_MODEL: deepseek-v4-pro
+      JUDGE_BASE_URL: https://api.deepseek.com
+    volumes:
+      # Mount native Workspace-Bench
+      - /Users/zxc/workspace-bench/Workspace-Bench:/workspace/Workspace-Bench
+      # Mount better-harness
+      - /Users/zxc/deepagents/deepagents/examples/better-harness:/workspace/better-harness
+      # Mount our project
+      - .:/workspace/workspace_bench_demo
+      # Named volumes for caches
+      - pip-cache:/root/.cache/pip
+      - uv-cache:/root/.cache/uv
+      - uv-python:/root/.local/share/uv/python
+      - npm-cache:/root/.npm
+    tty: true
+    stdin_open: true
+    command: sleep infinity
+
+volumes:
+  pip-cache:
+  uv-cache:
+  uv-python:
+  npm-cache:

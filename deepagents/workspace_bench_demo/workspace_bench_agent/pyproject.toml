@@ -1,0 +1,14 @@
+[project]
+name = "workspace-bench-agent"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "deepagents",
+    "langchain-openai",
+]
+
+[dependency-groups]
+test = ["pytest", "PyPDF2", "python-dotenv"]
+
+[tool.uv.sources]
+deepagents = { path = "../../libs/deepagents", editable = true }

@@ -4,7 +4,7 @@
 [experiment]
 name = "workspace-bench-10tasks-hard"
 runner = "pytest"
-workspace_root = "./workspace_bench_agent"
+workspace_root = "."
 model = "openai:deepseek-v4-pro"
 max_iterations = 3
 score_mode = "sum"
@@ -14,29 +14,29 @@ model = "openai:deepseek-v4-pro"
 max_turns = 300
 
 [runner.pytest]
-project_root = "./workspace_bench_agent"
+project_root = "."
 pytest_args = ["-q", "--tb=short", "-s"]
 uv_group = "test"
 
 # ========== Editable Harness Surfaces ==========
 
 [surfaces.prompt]
-kind = "module_attr"
-target = "workspace_bench_agent.graph:BASE_PROMPT"
+kind = "workspace_file"
+target = "runner_agent/prompt.txt"
 filename = "prompt.txt"
-base_file = "./workspace_bench_agent/graph.py"
+base_file = "./runner_agent/prompt.txt"
 
 [surfaces.middleware_registration]
 kind = "workspace_file"
-target = "graph.py"
-filename = "graph.py"
-base_file = "./workspace_bench_agent/graph.py"
+target = "runner_agent/harness.py"
+filename = "harness.py"
+base_file = "./runner_agent/harness.py"
 
 [surfaces.tools]
 kind = "workspace_file"
-target = "tools.py"
+target = "runner_agent/tools.py"
 filename = "tools.py"
-base_file = "./workspace_bench_agent/tools.py"
+base_file = "./runner_agent/tools.py"
 # NOTE: If Better Agent adds a new tool to this file, it must also update
 # the import line and the tools=[...] list in graph.py (see surface: middleware_registration).
 

@@ -1,1 +1,0 @@
-"""Workspace Bench Agent package."""

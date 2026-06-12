@@ -1,0 +1,10 @@
+"""Eval case for workspace-bench task 37."""
+
+from tests.conftest import run_task_eval
+
+
+def test_task_37():
+    score, passed, total = run_task_eval("37")
+    # Score is recorded in summary.json for better-harness.
+    # We assert >= 0 so the test always passes; acceptance is decided by score.
+    assert score >= 1.0

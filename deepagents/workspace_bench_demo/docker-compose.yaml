@@ -15,7 +15,7 @@ services:
       # Better-Harness path
       BETTER_HARNESS_ROOT: /workspace/better-harness
       # Python path
-      PYTHONPATH: /workspace/better-harness:/workspace/workspace_bench_demo/workspace_bench_agent
+      PYTHONPATH: /workspace/better-harness:/workspace/workspace_bench_demo
       # Default model configs
       INNER_AGENT_MODEL: deepseek-v4-pro
       BETTER_AGENT_MODEL: deepseek-v4-pro

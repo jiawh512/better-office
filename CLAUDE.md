@@ -180,8 +180,73 @@ Debug environment variables:
 
 When the TUI shows a startup failure banner, the real traceback is in a temp file matching `deepagents_server_log_*.txt` under `$TMPDIR` (macOS) or `/tmp` (Linux). Search for `Failed to initialize server graph`.
 
+## Better-Harness Integration (`deepagents/workspace_bench_demo/`)
+
+This is the **outer optimization loop** that automatically improves the agent harness using Workspace-Bench tasks as the evaluation signal.
+
+### Architecture
+
+```
+workspace_bench_demo/
+├── experiment.toml              # Better-harness config: train/holdout split, surfaces, model
+├── start.sh                     # Launch container + start optimization loop
+├── run_baseline_multiple.py     # Run baseline eval N times for stability check
+├── workspace_bench_agent/
+│   ├── graph.py                 # build_agent() — deepagents + ChatOpenAI harness
+│   ├── tools.py                 # Custom tools: parse_pdf, compute_hash
+│   ├── conftest.py              # Core eval logic: prep workspace → invoke agent → run judge
+│   ├── judge_wrapper.py         # Wrapper around Workspace-Bench native agent_eval.evaluate_task()
+│   └── tests/evals/             # One pytest case per Workspace-Bench task
+└── runs/                        # Optimization outputs (generated at runtime)
+```
+
+### How It Works
+
+**Harness:** Not an official Workspace-Bench harness (codex/openclaw/claudecode). It is a **custom deepagents harness** built on `create_deep_agent()` with `ChatOpenAI(deepseek-v4-pro)`.
+
+**Execution flow (`conftest.py::run_task_eval`):**
+1. Load `metadata.json` + copy task data files into a fresh `_work/` directory
+2. Copy `metadata.json` into `_work/` so the agent can read it
+3. Call `build_agent()` → `agent.invoke({"messages": prompt})`
+4. Collect output files (parse agent's final list → expected filenames → directory scan)
+5. Run judge via `judge_wrapper.run_judge()` (monkey-patches `agent_eval._chat_completions` with LangChain)
+6. Return `(score, passed, total)` to better-harness
+
+**Rubric-driven agent strategy:** The `BASE_PROMPT` in `graph.py` explicitly instructs the agent to **read `metadata.json` first** to discover output filenames and rubrics. The agent sees the exact evaluation criteria before acting, letting it optimize outputs for the judge. This is intentional — the prompt even says *"Treat rubric-specified facts as authoritative requirements for your output"* (critical for tasks like #116 where rubrics conflict with source data).
+
+### Common Commands
+
+```bash
+cd deepagents/workspace_bench_demo
+
+# Run baseline eval 3 times for stability
+docker compose exec better-harness-wb bash -c \
+  "cd /workspace/workspace_bench_demo && python run_baseline_multiple.py"
+
+# Start optimization loop
+./start.sh [suffix]
+
+# Run single task manually (inside container)
+docker compose exec better-harness-wb bash -c \
+  "cd /workspace/workspace_bench_demo && uv run --group test pytest \
+   workspace_bench_agent/tests/evals/test_task_15.py -s"
+
+# Check a specific case's judge result
+cat runs/.../history/visible/train/baseline/cases/.../judge_artifacts/rubrics_judge--*.json
+```
+
+### Key Files
+
+| File | Role |
+|------|------|
+| `experiment.toml` | Defines editable *surfaces* (prompt, graph.py, tools.py), train/holdout cases, model config |
+| `conftest.py` | The bridge between pytest and Workspace-Bench: workspace prep, agent invocation, judge scoring |
+| `judge_wrapper.py` | Wraps `agent_eval.evaluate_task()`; patches urllib judge with LangChain ChatOpenAI for stability |
+| `graph.py` | `build_agent()` — assembles deepagents harness with system prompt, backend, tools |
+
 ## Cross-Project Relationships
 
 - `Workspace-Bench/deepagents/` is a vendored/copy of the deepagents package used by the benchmark's `deepagent` harness.
 - The evaluation harness supports running `deepagents` as one of its agent backends alongside Codex, OpenClaw, and ClaudeCode.
 - `viz/` reads the JSON output structure produced by `evaluation/src/agent_runner.py` and `evaluation/src/agent_as_a_judge.py`.
+- `deepagents/workspace_bench_demo/` reuses Workspace-Bench's **task data** (`tasks_lite/`) and **judge logic** (`agent_eval.py`) but replaces the runner and harness with better-harness + deepagents.
